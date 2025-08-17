@@ -1,0 +1,5 @@
+{
+  "name": "AI Recipe Generator",
+  "description": "Never wonder what to cook again. This app uses AI to generate delicious recipes based on the ingredients you have, your dietary needs, and your time constraints.",
+  "requestFramePermissions": []
+}
