@@ -1,10 +1,11 @@
 import React from 'react';
 import type { Recipe } from '../types';
-import { ClockIcon, FireIcon, ServingsIcon, TotalTimeIcon, NutritionIcon } from './Icons';
+import { ClockIcon, FireIcon, ServingsIcon, TotalTimeIcon, NutritionIcon, HeartIcon } from './Icons';
 
 interface RecipeDisplayProps {
   recipe: Recipe;
-  imageUrl: string;
+  onSave: (recipe: Recipe) => void;
+  isSaved: boolean;
 }
 
 const InfoPill: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
@@ -15,16 +16,34 @@ const InfoPill: React.FC<{ icon: React.ReactNode; label: string; value: string }
     </div>
 );
 
-const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, imageUrl }) => {
+const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe, onSave, isSaved }) => {
   return (
     <div className="animate-fade-in-down">
       <div className="mb-6">
-        <h2 className="text-3xl lg:text-4xl font-bold font-serif text-brand-text-primary mb-2">{recipe.recipeName}</h2>
-        <p className="text-base text-brand-text-secondary">{recipe.description}</p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-brand-text-primary mb-2">{recipe.recipeName}</h2>
+                <p className="text-base text-brand-text-secondary">{recipe.description}</p>
+            </div>
+            <button
+                onClick={() => onSave(recipe)}
+                disabled={isSaved}
+                className="flex-shrink-0 flex items-center justify-center gap-2 w-full sm:w-auto bg-white text-brand-primary font-bold py-2 px-4 rounded-lg border-2 border-brand-primary hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-green-200 transition-all duration-200 disabled:bg-emerald-500 disabled:text-white disabled:border-emerald-500 disabled:cursor-not-allowed"
+            >
+                <HeartIcon filled={isSaved} />
+                {isSaved ? 'Saved!' : 'Save to Cookbook'}
+            </button>
+        </div>
       </div>
 
-      <div className="aspect-w-16 aspect-h-9 mb-6 rounded-xl overflow-hidden shadow-lg border border-brand-border">
-        <img src={imageUrl} alt={recipe.recipeName} className="object-cover w-full h-full" />
+      <div className="aspect-w-16 aspect-h-9 mb-6 rounded-xl overflow-hidden shadow-lg border border-brand-border bg-brand-bg-dark">
+        {recipe.imageUrl ? (
+          <img src={recipe.imageUrl} alt={recipe.recipeName} className="object-cover w-full h-full" />
+        ) : (
+           <div className="w-full h-full flex items-center justify-center animate-pulse">
+             <p className="text-brand-text-secondary font-medium">Generating image...</p>
+           </div>
+        )}
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">

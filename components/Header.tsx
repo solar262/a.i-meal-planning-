@@ -1,5 +1,5 @@
 import React from 'react';
-import ViewSwitcher from './ViewSwitcher';
+import { CookbookIcon } from './Icons';
 
 const ChefHatIcon: React.FC = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-brand-primary" viewBox="0 0 24 24" fill="currentColor">
@@ -8,21 +8,26 @@ const ChefHatIcon: React.FC = () => (
 );
 
 interface HeaderProps {
-  currentView: 'single' | 'planner';
-  setView: (view: 'single' | 'planner') => void;
+  setAppView: (view: 'generator' | 'cookbook') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentView, setView }) => {
+const Header: React.FC<HeaderProps> = ({ setAppView }) => {
   return (
-    <header className="bg-brand-surface py-4 border-b border-brand-border sticky top-0 z-10">
-      <div className="container mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <header className="bg-brand-surface/80 backdrop-blur-sm py-3 border-b border-brand-border sticky top-0 z-10">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-8 flex items-center justify-between gap-4">
+        <button className="flex items-center gap-3" onClick={() => setAppView('generator')}>
           <ChefHatIcon />
-          <h1 className="text-2xl font-bold font-serif text-brand-text-primary">
-            AI Meal Planner
+          <h1 className="text-xl sm:text-2xl font-bold font-serif text-brand-text-primary">
+            AI<span className="hidden sm:inline"> Meal</span> Planner
           </h1>
-        </div>
-        <ViewSwitcher currentView={currentView} setView={setView} />
+        </button>
+        <button 
+          onClick={() => setAppView('cookbook')}
+          className="flex items-center gap-2 text-sm font-semibold text-brand-text-primary bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 sm:px-4 rounded-lg transition-colors"
+        >
+          <CookbookIcon />
+          <span className="hidden sm:inline">My </span>Cookbook
+        </button>
       </div>
     </header>
   );

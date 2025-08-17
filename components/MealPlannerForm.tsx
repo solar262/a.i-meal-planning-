@@ -67,18 +67,49 @@ const MealPlannerForm: React.FC<MealPlannerFormProps> = ({ onSubmit, isLoading }
     const [useUpIngredients, setUseUpIngredients] = useState<string[]>(['broccoli', 'carrots', 'onions']);
     const [days, setDays] = useState<number>(5);
     const [diet, setDiet] = useState<string>('');
+    
+    const [showFitnessGoals, setShowFitnessGoals] = useState(false);
+    const [fitnessGoals, setFitnessGoals] = useState({
+        goal: 'maintain' as 'lose' | 'maintain' | 'gain',
+        age: 30,
+        gender: 'unspecified' as 'male' | 'female' | 'unspecified',
+        height: 170,
+        heightUnit: 'cm' as 'cm' | 'in',
+        weight: 70,
+        weightUnit: 'kg' as 'kg' | 'lbs',
+        activityLevel: 'light' as 'sedentary' | 'light' | 'moderate' | 'very' | 'extra',
+    });
+
+    const handleFitnessGoalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        const numValue = (name === 'age' || name === 'height' || name === 'weight') && value !== '' ? Number(value) : value;
+        setFitnessGoals(prev => ({...prev, [name]: numValue }));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (proteins.length > 0 || useUpIngredients.length > 0) {
-            onSubmit({
+            const formData: MealPlannerFormData = {
                 proteins: proteins.join(', '),
                 useUpIngredients: useUpIngredients.join(', '),
                 days,
                 diet
-            });
+            };
+            if (showFitnessGoals) {
+                Object.assign(formData, fitnessGoals);
+            }
+            onSubmit(formData);
         }
     };
+
+    const GoalButton: React.FC<{ value: 'lose' | 'maintain' | 'gain', label: string }> = ({ value, label }) => (
+        <button
+            type="button"
+            name="goal"
+            onClick={() => setFitnessGoals(prev => ({...prev, goal: value}))}
+            className={`w-full text-sm font-semibold p-2.5 rounded-md transition-colors ${fitnessGoals.goal === value ? 'bg-brand-primary text-white shadow' : 'bg-brand-bg-dark hover:bg-gray-200'}`}
+        >{label}</button>
+    );
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in-down">
@@ -105,6 +136,72 @@ const MealPlannerForm: React.FC<MealPlannerFormProps> = ({ onSubmit, isLoading }
             <div>
               <label htmlFor="diet-planner" className="block text-base font-medium text-brand-text-secondary mb-1">Dietary Needs <span className="text-gray-400">(optional)</span></label>
               <input type="text" id="diet-planner" name="diet" className="w-full p-3 border border-brand-border rounded-lg shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition duration-150" placeholder="e.g., vegan, low-carb" value={diet} onChange={(e) => setDiet(e.target.value)} />
+            </div>
+
+            {/* Fitness Goals Section */}
+            <div className="border border-brand-border rounded-lg">
+                <button type="button" onClick={() => setShowFitnessGoals(!showFitnessGoals)} className="w-full p-3 text-left flex justify-between items-center bg-brand-bg-light hover:bg-brand-bg-dark rounded-t-lg">
+                    <span className="font-semibold text-brand-text-primary">Optional: Personalize with Fitness Goals</span>
+                    <svg className={`w-5 h-5 transform transition-transform ${showFitnessGoals ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {showFitnessGoals && (
+                    <div className="p-4 space-y-4 border-t border-brand-border">
+                        <div>
+                            <label className="block text-base font-medium text-brand-text-secondary mb-2">Primary Goal</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                <GoalButton value="lose" label="Lose Weight" />
+                                <GoalButton value="maintain" label="Maintain" />
+                                <GoalButton value="gain" label="Gain Muscle" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="age" className="block text-sm font-medium text-brand-text-secondary mb-1">Age</label>
+                                <input type="number" id="age" name="age" value={fitnessGoals.age} onChange={handleFitnessGoalChange} className="w-full p-2 border border-brand-border rounded-lg" />
+                            </div>
+                            <div>
+                                <label htmlFor="gender" className="block text-sm font-medium text-brand-text-secondary mb-1">Gender</label>
+                                <select id="gender" name="gender" value={fitnessGoals.gender} onChange={handleFitnessGoalChange} className="w-full p-2 border border-brand-border rounded-lg bg-white">
+                                    <option value="unspecified">Prefer not to say</option>
+                                    <option value="female">Female</option>
+                                    <option value="male">Male</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="height" className="block text-sm font-medium text-brand-text-secondary mb-1">Height</label>
+                                <div className="flex">
+                                    <input type="number" id="height" name="height" value={fitnessGoals.height} onChange={handleFitnessGoalChange} className="w-full p-2 border-r-0 border border-brand-border rounded-l-lg" />
+                                    <select name="heightUnit" value={fitnessGoals.heightUnit} onChange={handleFitnessGoalChange} className="p-2 border border-brand-border rounded-r-lg bg-brand-bg-light">
+                                        <option value="cm">cm</option>
+                                        <option value="in">in</option>
+                                    </select>
+                                </div>
+                            </div>
+                             <div>
+                                <label htmlFor="weight" className="block text-sm font-medium text-brand-text-secondary mb-1">Weight</label>
+                                <div className="flex">
+                                    <input type="number" id="weight" name="weight" value={fitnessGoals.weight} onChange={handleFitnessGoalChange} className="w-full p-2 border-r-0 border border-brand-border rounded-l-lg" />
+                                    <select name="weightUnit" value={fitnessGoals.weightUnit} onChange={handleFitnessGoalChange} className="p-2 border border-brand-border rounded-r-lg bg-brand-bg-light">
+                                        <option value="kg">kg</option>
+                                        <option value="lbs">lbs</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                         <div>
+                            <label htmlFor="activityLevel" className="block text-sm font-medium text-brand-text-secondary mb-1">Activity Level</label>
+                            <select id="activityLevel" name="activityLevel" value={fitnessGoals.activityLevel} onChange={handleFitnessGoalChange} className="w-full p-2 border border-brand-border rounded-lg bg-white">
+                                <option value="sedentary">Sedentary (little or no exercise)</option>
+                                <option value="light">Lightly Active (light exercise/sports 1-3 days/week)</option>
+                                <option value="moderate">Moderately Active (moderate exercise 3-5 days/week)</option>
+                                <option value="very">Very Active (hard exercise 6-7 days/week)</option>
+                                <option value="extra">Extra Active (very hard exercise & physical job)</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <button

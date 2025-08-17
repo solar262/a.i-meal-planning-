@@ -9,7 +9,7 @@ const InitialState: React.FC<InitialStateProps> = ({ view }) => {
         single: {
             icon: '🍲',
             title: 'Ready to cook something amazing?',
-            description: 'Use the form on the left to add ingredients, select your preferences, and let our AI chef create a custom recipe just for you.'
+            description: 'Use the form above to add ingredients, select your preferences, and let our AI chef create a custom recipe just for you.'
         },
         planner: {
             icon: '🗓️',

@@ -1,29 +1,54 @@
 import React, { useState } from 'react';
-import type { MealPlan } from '../types';
+import type { MealPlan, Recipe } from '../types';
 import RecipeDisplay from './RecipeDisplay';
-import { PlannerIcon, ShoppingListIcon, ExternalLinkIcon } from './Icons';
+import { PlannerIcon, ShoppingListIcon, ExternalLinkIcon, TargetIcon, ProteinIcon, CarbsIcon, FatIcon } from './Icons';
 
 interface MealPlannerDisplayProps {
   mealPlan: MealPlan;
   imageUrls: Record<string, string>;
+  onSaveRecipe: (recipe: Recipe) => void;
+  savedRecipeIds: Set<string>;
 }
 
-const MealPlannerDisplay: React.FC<MealPlannerDisplayProps> = ({ mealPlan, imageUrls }) => {
+const InfoPill: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
+    <div className="flex flex-col items-center justify-center bg-brand-bg-dark text-brand-text-primary p-3 rounded-lg text-center h-full border border-brand-border">
+        <div className="text-brand-primary">{icon}</div>
+        <span className="text-xs font-semibold uppercase mt-1 text-brand-text-secondary">{label}</span>
+        <span className="text-sm font-bold">{value}</span>
+    </div>
+);
+
+const NutritionSummary: React.FC<{ summary: MealPlan['nutritionSummary'] }> = ({ summary }) => {
+    if (!summary || !summary.targetCalories) return null;
+
+    return (
+        <div className="p-4 sm:p-6 mb-6 bg-emerald-50 border border-emerald-200 rounded-2xl animate-fade-in-down">
+            <h3 className="text-xl font-bold font-serif text-brand-text-primary mb-4">Your Daily Nutrition Targets</h3>
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <InfoPill icon={<TargetIcon />} label="Calories" value={summary.targetCalories} />
+                <InfoPill icon={<ProteinIcon />} label="Protein" value={summary.targetProtein} />
+                <InfoPill icon={<CarbsIcon />} label="Carbs" value={summary.targetCarbs} />
+                <InfoPill icon={<FatIcon />} label="Fat" value={summary.targetFat} />
+            </div>
+            <p className="text-sm text-brand-text-secondary text-center md:text-left">{summary.explanation}</p>
+        </div>
+    );
+};
+
+const MealPlannerDisplay: React.FC<MealPlannerDisplayProps> = ({ mealPlan, imageUrls, onSaveRecipe, savedRecipeIds }) => {
   const [activeTab, setActiveTab] = useState<'plan' | 'shopping'>('plan');
   const [expandedDay, setExpandedDay] = useState<string | null>(mealPlan.plan.length > 0 ? mealPlan.plan[0].day : null);
 
   const handleShopOnline = () => {
     const cleanIngredients = mealPlan.shoppingList.map(item => {
-      // A simple regex to remove leading numbers, fractions, units, and text in parentheses.
-      // It also removes any description that follows a comma.
       return item
-        .replace(/^[0-9/.\s-]+(\s*\w+\(s\))?/, '') // Removes quantities like "1", "1/2", "2-3" and optional units
-        .replace(/\(.*\)/, '') // Removes anything in parentheses like "(2 sticks)"
-        .split(',')[0] // Takes only the part before the first comma
+        .replace(/^[0-9/.\s-]+(\s*\w+\(s\))?/, '')
+        .replace(/\(.*\)/, '')
+        .split(',')[0]
         .trim();
     });
 
-    const uniqueIngredients = [...new Set(cleanIngredients.filter(Boolean))]; // Remove duplicates and empty strings
+    const uniqueIngredients = [...new Set(cleanIngredients.filter(Boolean))];
     const searchKeywords = uniqueIngredients.join(', ');
     const url = `https://www.amazon.com/alm/search?keywords=${encodeURIComponent(searchKeywords)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -51,13 +76,15 @@ const MealPlannerDisplay: React.FC<MealPlannerDisplayProps> = ({ mealPlan, image
     const { day, recipe } = dayPlan;
     const isExpanded = expandedDay === day;
     const imageUrl = imageUrls[recipe.recipeName];
+    const panelId = `panel-${day.replace(/\s+/g, '-')}`;
 
     return (
-      <div className="border border-brand-border rounded-lg overflow-hidden transition-all duration-300">
+      <div className={`border rounded-lg overflow-hidden transition-all duration-300 ${isExpanded ? 'bg-emerald-50 border-emerald-200' : 'bg-transparent border-brand-border'}`}>
         <button
-          className="w-full text-left p-4 flex items-center justify-between bg-brand-bg-light hover:bg-brand-bg-dark"
+          className="w-full text-left p-4 flex items-center justify-between hover:bg-brand-bg-dark transition-colors"
           onClick={() => setExpandedDay(isExpanded ? null : day)}
           aria-expanded={isExpanded}
+          aria-controls={panelId}
         >
           <div className="flex items-center">
             {imageUrl ? (
@@ -70,13 +97,13 @@ const MealPlannerDisplay: React.FC<MealPlannerDisplayProps> = ({ mealPlan, image
                 <p className="font-bold font-serif text-brand-text-primary text-lg">{recipe.recipeName}</p>
             </div>
           </div>
-          <svg className={`w-6 h-6 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className={`w-6 h-6 transform transition-transform text-brand-text-secondary ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
         {isExpanded && (
-          <div className="p-4 sm:p-6 border-t border-brand-border bg-white">
-            <RecipeDisplay recipe={recipe} imageUrl={imageUrl} />
+          <div id={panelId} role="region" className="p-4 sm:p-6 border-t border-brand-border bg-white">
+            <RecipeDisplay recipe={recipe} onSave={onSaveRecipe} isSaved={savedRecipeIds.has(recipe.id)} />
           </div>
         )}
       </div>
@@ -85,6 +112,8 @@ const MealPlannerDisplay: React.FC<MealPlannerDisplayProps> = ({ mealPlan, image
 
   return (
     <div className="animate-fade-in-down w-full">
+      <NutritionSummary summary={mealPlan.nutritionSummary} />
+
       <div className="border-b border-brand-border flex mb-6">
         <TabButton tabName="plan" label="Meal Plan" icon={<PlannerIcon />} />
         <TabButton tabName="shopping" label="Shopping List" icon={<ShoppingListIcon />} />
